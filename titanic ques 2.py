@@ -1,58 +1,68 @@
-
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Load dataset
-df = pd.read_csv(r"C:\Users\Asus\Downloads\titanic\train.csv")
+# ===================== Load and Prepare Population Dataset =====================
 
-# Data Cleaning
-df['Age'] = df['Age'].fillna(df['Age'].median())
-df['Embarked'] = df['Embarked'].fillna(df['Embarked'].mode()[0])
-df.drop(columns='Cabin', inplace=True)
+# Load the dataset (skip metadata rows)
+df = pd.read_csv(
+    r"C:\Users\Asus\Downloads\API_SP.POP.TOTL_DS2_en_csv_v2_38144\API_SP.POP.TOTL_DS2_en_csv_v2_38144.csv",
+    skiprows=4
+)
 
-# Plot: Survival Count
-plt.figure(figsize=(6, 4))
-sns.countplot(x='Survived', data=df)
-plt.title("Survival Count")
-plt.show()
+# Convert 2022 population column to numeric
+df['2022'] = pd.to_numeric(df['2022'], errors='coerce')
 
-# Plot: Survival by Sex
-plt.figure(figsize=(6, 4))
-sns.countplot(x='Sex', hue='Survived', data=df)
-plt.title("Survival by Sex")
-plt.show()
+# Drop rows with missing population data
+df = df.dropna(subset=['2022'])
 
-# Plot: Survival by Class
-plt.figure(figsize=(6, 4))
-sns.countplot(x='Pclass', hue='Survived', data=df)
-plt.title("Survival by Passenger Class")
-plt.show()
+# ===================== 1. Histogram: Population Distribution =====================
 
-# Plot: Age Distribution by Survival
-plt.figure(figsize=(8, 5))
-sns.histplot(data=df, x='Age', hue='Survived', bins=30, kde=True)
-plt.title("Age Distribution by Survival")
-plt.show()
-
-# Plot: Fare Distribution by Survival
-plt.figure(figsize=(8, 5))
-sns.histplot(data=df, x='Fare', hue='Survived', bins=40, kde=True)
-plt.title("Fare Distribution by Survival")
-plt.show()
-
-# Correlation Heatmap
-df_encoded = df.copy()
-
-# Encode categorical variables
-df_encoded['Sex'] = df_encoded['Sex'].map({'male': 0, 'female': 1})
-df_encoded['Embarked'] = df_encoded['Embarked'].map({'S': 0, 'C': 1, 'Q': 2})
-
-# Drop non-numeric columns for correlation
-df_encoded = df_encoded.drop(columns=['Name', 'Ticket'])
-
-# Heatmap
 plt.figure(figsize=(10, 6))
-sns.heatmap(df_encoded.corr(), annot=True, cmap='coolwarm', fmt='.2f')
-plt.title("Correlation Heatmap")
+sns.histplot(df['2022'], bins=30, kde=True, color='skyblue')
+plt.title("Population Distribution Across Countries (2022)")
+plt.xlabel("Population")
+plt.ylabel("Number of Countries")
+plt.xscale('log')  # Use log scale for wide range of population
+plt.tight_layout()
+plt.show()
+
+# ===================== 2. Bar Chart: Top 10 Most Populous Countries =====================
+
+top10 = df[['Country Name', '2022']].sort_values(by='2022', ascending=False).head(10)
+
+plt.figure(figsize=(10, 6))
+sns.barplot(
+    data=top10,
+    y='Country Name',
+    x='2022',
+    hue='Country Name',
+    palette='viridis',
+    legend=False
+)
+plt.title("Top 10 Most Populous Countries (2022)")
+plt.xlabel("Population")
+plt.ylabel("Country")
+plt.tight_layout()
+plt.show()
+
+# ===================== 3. Bar Chart: Age Distribution  =====================
+
+# Sample age group data
+age_groups = ['0–20', '21–40', '41–60', '61–80', '81+']
+counts = [512, 680, 430, 210, 60]
+
+plt.figure(figsize=(9, 5))
+bars = plt.bar(age_groups, counts, color='mediumseagreen', edgecolor='black')
+
+# Add value labels on top of each bar
+for bar in bars:
+    yval = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2, yval + 10, yval, ha='center', va='bottom')
+
+plt.xlabel('Age Groups')
+plt.ylabel('Number of People')
+plt.title('Age Distribution')
+plt.grid(axis='y', linestyle='--', alpha=0.4)
+plt.tight_layout()
 plt.show()
